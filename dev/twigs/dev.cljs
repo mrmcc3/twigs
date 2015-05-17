@@ -3,4 +3,11 @@
 
 (enable-console-print!)
 
-(tw/foo "twigs")
+(def r
+  (tw/ref "https://twigs.firebaseio.com/a/b"))
+
+(println (pop r))
+
+(println (conj r :c))
+
+(println (= (empty r) (-> r pop pop)))

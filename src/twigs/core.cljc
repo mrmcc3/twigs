@@ -1,6 +1,29 @@
-(ns twigs.core)
+(ns twigs.core
+  (#?(:cljs
+       (:require [cljsjs.firebase]))))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+#?(:cljs
+    (deftype TwigRef [fb-ref]
+
+      Object
+      (toString [_] (.toString fb-ref))
+
+      IStack
+      (-peek [_] (-> fb-ref .key keyword))
+      (-pop [_] (TwigRef. (.parent fb-ref)))
+
+      ICollection
+      (-conj [_ c] (TwigRef. (.child fb-ref (name c))))
+
+      IEmptyableCollection
+      (-empty [_] (TwigRef. (.root fb-ref)))
+
+      IEquiv
+      (-equiv [_ other]
+        (if (instance? TwigRef other)
+          (identical? (str fb-ref) (str other))
+          false))))
+
+(defn ref [url]
+  (TwigRef. #?(:cljs (js/Firebase. url))))
+
