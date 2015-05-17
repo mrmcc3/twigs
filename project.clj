@@ -9,7 +9,7 @@
 
   :plugins [[lein-cljsbuild "1.0.6"]]
 
-  :clean-targets ["dev/public/out" "dev/public/main.js"]
+  :clean-targets ["target" "dev/public/out" "dev/public/main.js"]
 
   :cljsbuild {
     :builds [{:id "dev"
