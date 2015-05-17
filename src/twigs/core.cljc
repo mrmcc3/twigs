@@ -1,6 +1,7 @@
 (ns twigs.core
-  (#?(:cljs
-       (:require [cljsjs.firebase]))))
+  (:refer-clojure :exclude [ref])
+  #?(:cljs
+      (:require [cljsjs.firebase])))
 
 #?(:cljs
     (deftype TwigRef [fb-ref]
@@ -25,5 +26,5 @@
           false))))
 
 (defn ref [url]
-  (TwigRef. #?(:cljs (js/Firebase. url))))
+  #?(:cljs (TwigRef. (js/Firebase. url))))
 
