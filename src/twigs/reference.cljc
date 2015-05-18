@@ -42,17 +42,17 @@
   Object
   (toString [_] (.toString ref))
 
+  IPersistentStack
+  (peek [_] (-> ref .getKey keyword))
+  (pop [_] (TwigRef. (.getParent ref)))
+
   IPersistentCollection
   (cons [_ c] (TwigRef. (.child ref (name c))))
   (empty [_] (TwigRef. (.getRoot ref)))
   (equiv [_ other]
     (if (instance? TwigRef other)
       (= (str ref) (str other))
-      false))
-
-  IPersistentStack
-  (peek [_] (-> ref .getKey keyword))
-  (pop [_] (TwigRef. (.getParent ref)))))
+      false))))
 
 (defn wrap-reference
   "construct a twig reference from a url."
