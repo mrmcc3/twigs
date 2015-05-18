@@ -1,4 +1,4 @@
-(defproject twigs "0.1.0"
+(defproject twigs "0.1.1-SNAPSHOT"
   :description "A nicer way to use firebase in Clojure[Script]"
   :url "https://github.com/mrmcc3/twigs"
   :license {:name "MIT"}
