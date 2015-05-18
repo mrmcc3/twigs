@@ -5,6 +5,7 @@
 
   :dependencies [[org.clojure/clojure "1.7.0-beta3"]
                  [org.clojure/clojurescript "0.0-3269"]
+                 [com.firebase/firebase-client-jvm "2.2.4"]
                  [cljsjs/firebase "2.2.3-0"]]
 
   :plugins [[lein-cljsbuild "1.0.6"]]
