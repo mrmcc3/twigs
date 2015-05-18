@@ -10,7 +10,9 @@
 
   :plugins [[lein-cljsbuild "1.0.6"]]
 
-  :clean-targets ["target" "dev/public/out" "dev/public/main.js"]
+  :java-source-paths ["src/java"]
+
+  :clean-targets ^{:protect false} ["target" "dev/public/out" "dev/public/main.js"]
 
   :cljsbuild {
     :builds [{:id "dev"

@@ -44,8 +44,6 @@
          (= (str ref) (str other))
          false))))
 
-(defn wrap-reference
-  "construct a twig reference from a url."
-  [url]
+(defn wrap-reference [url]
   (TwigRef. (#?(:cljs js/Firebase. :clj Firebase.) url)))
 
