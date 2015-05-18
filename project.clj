@@ -1,4 +1,4 @@
-(defproject twigs "0.1.1"
+(defproject twigs "0.1.2-SNAPSHOT"
   :description "A nicer way to use firebase in Clojure[Script]"
   :url "https://github.com/mrmcc3/twigs"
   :license {:name "MIT"}
@@ -7,6 +7,9 @@
                  [org.clojure/clojurescript "0.0-3269"]
                  [com.firebase/firebase-client-jvm "2.2.4"]
                  [cljsjs/firebase "2.2.3-0"]]
+
+  :repositories [["releases" {:url "https://clojars.org/repo"
+                              :creds :gpg}]]
 
   :plugins [[lein-cljsbuild "1.0.6"]]
 
