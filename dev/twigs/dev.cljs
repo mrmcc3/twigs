@@ -22,6 +22,8 @@
 
     (println k) ;; "b"
     (println @c) ;; "hello". remember to deref values
+    (println (realized? c)) ;; true
+    (println (count v)) ;; 2
 
     ;; snapshots are now sequable
     (-> v keys println)
