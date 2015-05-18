@@ -6,53 +6,43 @@
 
 ;; wrapper type around firebase references
 
-;; allows the use of clojure built in functions instead of firebase API
+#?(:cljs
+   (deftype TwigRef [ref]
+     Object
+     (toString [_] (.toString ref))
 
-;; .key -> peek
-;; .parent -> pop
-;; .child -> conj
-;; .root -> empty
+     IStack
+     (-peek [_] (-> ref .key keyword))
+     (-pop [_] (TwigRef. (.parent ref)))
 
-;; use .-ref/.ref  to access the underlying firebase reference
+     ICollection
+     (-conj [_ c] (TwigRef. (.child ref (name c))))
 
-#?(
-:cljs
-(deftype TwigRef [ref]
-  Object
-  (toString [_] (.toString ref))
+     IEmptyableCollection
+     (-empty [_] (TwigRef. (.root ref)))
 
-  IStack
-  (-peek [_] (-> ref .key keyword))
-  (-pop [_] (TwigRef. (.parent ref)))
+     IEquiv ;; two twig references with the same url are equal
+     (-equiv [_ other]
+       (if (instance? TwigRef other)
+         (= (str ref) (str other))
+         false)))
 
-  ICollection
-  (-conj [_ c] (TwigRef. (.child ref (name c))))
+   :clj
+   (deftype TwigRef [ref]
+     Object
+     (toString [_] (.toString ref))
 
-  IEmptyableCollection
-  (-empty [_] (TwigRef. (.root ref)))
+     IPersistentStack
+     (peek [_] (-> ref .getKey keyword))
+     (pop [_] (TwigRef. (.getParent ref)))
 
-  IEquiv ;; two twig references with the same url are equal
-  (-equiv [_ other]
-    (if (instance? TwigRef other)
-      (= (str ref) (str other))
-      false)))
-
-:clj
-(deftype TwigRef [ref]
-  Object
-  (toString [_] (.toString ref))
-
-  IPersistentStack
-  (peek [_] (-> ref .getKey keyword))
-  (pop [_] (TwigRef. (.getParent ref)))
-
-  IPersistentCollection
-  (cons [_ c] (TwigRef. (.child ref (name c))))
-  (empty [_] (TwigRef. (.getRoot ref)))
-  (equiv [_ other]
-    (if (instance? TwigRef other)
-      (= (str ref) (str other))
-      false))))
+     IPersistentCollection
+     (cons [_ c] (TwigRef. (.child ref (name c))))
+     (empty [_] (TwigRef. (.getRoot ref)))
+     (equiv [_ other]
+       (if (instance? TwigRef other)
+         (= (str ref) (str other))
+         false))))
 
 (defn wrap-reference
   "construct a twig reference from a url."

@@ -1,4 +1,6 @@
-(ns twigs.snapshot)
+(ns twigs.snapshot
+  #?(:clj (:import [clojure.lang IPending IDeref ILookup
+                                 Associative Seqable Counted])))
 
 ;; wrapper type around firebase datasnapshot.
 
@@ -17,41 +19,52 @@
 ;; v is also associative, seqable, countable and supports lookup
 
 #?(:cljs
-    (deftype TwigSnapshot [ss d]
-      Object
-      (toString [coll] "TwigSnapshot")
+   (deftype TwigSnapshot [ss d]
+     Object
+     (toString [_] "TwigSnapshot")
 
-      IPending
-      (-realized? [_] (realized? d))
+     IPending
+     (-realized? [_] (realized? d))
 
-      IDeref
-      (-deref [_] @d)
+     IDeref
+     (-deref [_] @d)
 
-      ILookup
-      (-lookup [this k] (-lookup this k nil))
-      (-lookup [_ k nf]
+     ILookup
+     (-lookup [this k] (-lookup this k nil))
+     (-lookup [_ k nf]
        (if (.hasChild ss (name k))
          (let [css (.child ss (name k))]
            (TwigSnapshot. css
-             (if (realized? d)
-               (doto (delay (get @d (keyword k)) deref))
-               (delay (-> css .exportVal
-                          (js->clj :keywordize-keys true))))))
+                          (if (realized? d)
+                            (doto (delay (get @d (keyword k)) deref))
+                            (delay (-> css .exportVal
+                                       (js->clj :keywordize-keys true))))))
          nf))
 
-      IAssociative
-      (-contains-key? [_ k] (.hasChild ss k))
+     IAssociative
+     (-contains-key? [_ k] (.hasChild ss k))
 
-      ISeqable
-      (-seq [this]
-        (if (.hasChildren ss)
-          (let [snaps (array)]
-            (.forEach ss (fn [css]
-                           (.push snaps (.key css)) false))
-            (map (fn [k] [k (-lookup this k)]) snaps))))
+     ISeqable
+     (-seq [this]
+       (if (.hasChildren ss)
+         (let [snaps (array)]
+           (.forEach ss (fn [css]
+                          (.push snaps (.key css)) false))
+           (map (fn [k] [k (-lookup this k)]) snaps))))
 
-      ICounted
-      (-count [_] (.numChildren ss))))
+     ICounted
+     (-count [_] (.numChildren ss)))
+
+   :clj
+   (deftype TwigSnapshot [ss d]
+     Object
+     (toString [_] "TwigSnapshot")
+
+     IPending
+     (isRealized [_] (realized? d))
+
+     IDeref
+     (deref [_] @d)))
 
 (defn wrap-snapshot
   "converts a firebase snapshot to a twig snapshot."
@@ -61,5 +74,5 @@
             ss (TwigSnapshot. raw-ss
                  (delay (-> raw-ss .exportVal
                             (js->clj :keywordize-keys true))))]
-        [(keyword n) ss])))
+            [(keyword n) ss])))
 
