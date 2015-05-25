@@ -45,8 +45,8 @@
               snaps))))
 
   ILookup
-  #?(:cljs (-lookup [this k] (-lookup this k nil))
-     :clj (valAt [this k] (.valAt this k nil)))
+  #?(:cljs (-lookup [this k] (-lookup this k (delay nil)))
+     :clj (valAt [this k] (.valAt this k (delay nil))))
   (#?(:cljs -lookup :clj valAt) [_ k nf]
     (if (.hasChild ss (name k))
       (let [css (.child ss (name k))]
