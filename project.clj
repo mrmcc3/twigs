@@ -3,8 +3,8 @@
   :url "https://github.com/mrmcc3/twigs"
   :license {:name "MIT"}
 
-  :dependencies [[org.clojure/clojure "1.7.0-beta3"]
-                 [org.clojure/clojurescript "0.0-3269"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
+                 [org.clojure/clojurescript "0.0-3297"]
                  [com.firebase/firebase-client-jvm "2.2.4"]
                  [cljsjs/firebase "2.2.3-0"]]
 
