@@ -45,8 +45,9 @@
               snaps))))
 
   ILookup
-  #?(:cljs (-lookup [this k] (-lookup this k (delay nil)))
-     :clj (valAt [this k] (.valAt this k (delay nil))))
+  (#?(:cljs -lookup :clj valAt) [this k]
+    (#?(:cljs -lookup :clj .valAt) this k
+      (TwigSnapshot. (.child ss (name k)) (delay nil))))
   (#?(:cljs -lookup :clj valAt) [_ k nf]
     (if (.hasChild ss (name k))
       (let [css (.child ss (name k))]
