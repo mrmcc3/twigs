@@ -1,31 +1,44 @@
 (ns twigs.reference
   (:refer-clojure :exclude [ref])
-  #?(:cljs (:require [cljsjs.firebase])
-     :clj (:import [clojure.lang IPersistentCollection IPersistentStack]
+  (:require [twigs.snapshot :refer [wrap-snapshot]]
+            #?@(:cljs [cljsjs.firebase]))
+  #?(:clj (:import [clojure.lang IPersistentCollection IPersistentStack]
                    [com.firebase.client Firebase])))
 
 ;; wrapper type around firebase references
 
 #?(:cljs
-   (deftype TwigRef [ref]
+   (deftype TwigRef [ref watches]
      Object
      (toString [_] (.toString ref))
 
      IStack
      (-peek [_] (-> ref .key keyword))
-     (-pop [_] (TwigRef. (.parent ref)))
+     (-pop [_] (TwigRef. (.parent ref) watches))
 
      ICollection
-     (-conj [_ c] (TwigRef. (.child ref (name c))))
+     (-conj [_ c] (TwigRef. (.child ref (name c)) watches))
 
      IEmptyableCollection
-     (-empty [_] (TwigRef. (.root ref)))
+     (-empty [_] (TwigRef. (.root ref) watches))
 
      IEquiv ;; two twig references with the same url are equal
      (-equiv [_ other]
        (if (instance? TwigRef other)
          (= (str ref) (str other))
-         false)))
+         false))
+
+     ;; alpha!
+     IWatchable
+     (-add-watch [this k f]
+       (if-let [g (get watches k)]
+         (.off ref "value" g))
+       (.on ref "value" (fn [ss] (f (wrap-snapshot ss))))
+       (set! (.-watches this) (assoc watches k f)))
+     (-remove-watch [this k]
+       (if-let [f (get watches k)]
+         (.off ref "value" f))
+       (set! (.-watches this) (dissoc watches k))))
 
    :clj
    (deftype TwigRef [ref]
@@ -45,5 +58,6 @@
          false))))
 
 (defn wrap-reference [url]
-  (TwigRef. (#?(:cljs js/Firebase. :clj Firebase.) url)))
+  #?(:cljs (TwigRef. (js/Firebase. url) {})
+     :clj (TwigRef. (Firebase. url))))
 
