@@ -10,9 +10,9 @@ This library is alpha quality.
 
 ```bash
 # Clojure
-lein test twigs.core-test
+lein test
 
 # ClojureScript in browser
-lein cljsbuild once test
-open test.html
+lein cljsbuild once browser-test
+open browser-test.html
 ```

@@ -15,8 +15,6 @@
     (is (= (conj r :b) (tw/url->ref (str url "/b"))))
     (is (= r (-> r (conj :c) pop)))))
 
-;; WIP need clj
-
 (deftest twig-query-snaps
   (let [r (tw/url->ref "https://twigs.firebaseio.com/a")
         q (tw/query r)
