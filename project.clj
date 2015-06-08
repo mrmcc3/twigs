@@ -11,7 +11,7 @@
 
   :plugins [[lein-cljsbuild "1.0.6"]]
 
-  :java-source-paths ["src/java"]
+  :java-source-paths ["src/twigs/java"]
 
   :cljsbuild {
     :builds [{:id "test"

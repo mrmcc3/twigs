@@ -6,7 +6,7 @@ A simple way to use firebase from Clojure[Script]
 
 This library is alpha quality.
 
-## Tests (WIP)
+### Tests (WIP)
 
 ```bash
 # Clojure
