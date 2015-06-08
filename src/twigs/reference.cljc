@@ -3,7 +3,7 @@
      :clj (:import [clojure.lang IPersistentCollection IPersistentStack]
                    [com.firebase.client Firebase])))
 
-;; wrapper type around firebase references
+;; thin wrapper type around firebase references
 
 #?(:cljs
    (deftype TwigRef [ref]

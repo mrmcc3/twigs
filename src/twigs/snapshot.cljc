@@ -5,7 +5,7 @@
 
 ;; wrapper type around firebase datasnapshot.
 
-;; This is the main motivation for this library. It's tempting to just handle
+;; This is perhaps the main motivation for this library. It's tempting to just handle
 ;; all firebase snapshots with (-> ss .val js->clj) to get clojure
 ;; datastructures and all their goodness.
 

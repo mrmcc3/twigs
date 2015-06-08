@@ -13,15 +13,12 @@
 
   :java-source-paths ["src/java"]
 
-  :clean-targets ^{:protect false} ["target" "dev/public/out" "dev/public/main.js"]
-
   :cljsbuild {
-    :builds [{:id "dev"
-              :source-paths ["src" "dev"]
-              :compiler {:main twigs.dev
-                         :output-to "dev/public/main.js"
-                         :output-dir "dev/public/out"
-                         :asset-path "out"
+    :builds [{:id "test"
+              :source-paths ["src" "test"]
+              :compiler {:main twigs.test-runner
+                         :output-to "target/test.js"
+                         :output-dir "target/test"
                          :optimizations :none
                          :source-map true}}]})
 

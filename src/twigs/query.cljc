@@ -7,7 +7,7 @@
   #?(:clj (:import [com.firebase.client Firebase])))
 
 ;; A TwigQuery is a publisher of events at a given firebase reference
-;; and with a set of query options.
+;; with a set of query options.
 
 ;; you can subscribe to events using the standard core.async sub function
 ;; with a topic of :value :child_added :child_removed :child_changed or :child_moved
@@ -38,19 +38,20 @@
        (doseq [[ch _] (get @subs topic)]
          (ca/unsub* this topic ch)))))
 
-(defn query [twig-ref
-             {:keys [order-by-child order-by-value order-by-key order-by-priority
+(defn query
+  ([twig-ref] (query twig-ref {}))
+  ([twig-ref {:keys [order-by-child order-by-value order-by-key order-by-priority
                      start-at end-at equal-to limit-to-first limit-to-last]}]
-  #?(:cljs
-  (let [q (cond-> (.-ref twig-ref)
-            order-by-child (.orderByChild order-by-child)
-            order-by-value .orderByValue
-            order-by-key .orderByKey
-            order-by-priority .orderByPriority
-            start-at (.startAt start-at)
-            end-at (.endAt end-at)
-            equal-to (.equalTo equal-to)
-            limit-to-first (.limitToFirst limit-to-first)
-            limit-to-last (.limitToLast limit-to-last))]
-    (TwigQuery. q (atom {})))))
+    #?(:cljs
+    (let [q (cond-> (.-ref twig-ref)
+              order-by-child (.orderByChild order-by-child)
+              order-by-value .orderByValue
+              order-by-key .orderByKey
+              order-by-priority .orderByPriority
+              start-at (.startAt start-at)
+              end-at (.endAt end-at)
+              equal-to (.equalTo equal-to)
+              limit-to-first (.limitToFirst limit-to-first)
+              limit-to-last (.limitToLast limit-to-last))]
+      (TwigQuery. q (atom {}))))))
 
