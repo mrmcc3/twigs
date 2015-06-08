@@ -20,7 +20,7 @@
 #?(:cljs
    (deftype TwigQuery [q subs]
      ca/Pub
-     (sub* [_ topic ch close?]
+     (sub* [_ topic ch close?] ;; could be ch-or-fn for callback style ??
        (let [cb #(ca/put! ch (wrap-snapshot %))
              t (name topic)]
          (when-not (get-in @subs [t ch])
@@ -38,6 +38,19 @@
        (doseq [[ch _] (get @subs topic)]
          (ca/unsub* this topic ch)))))
 
-(defn query [twig-ref opts]
-  #?(:cljs (TwigQuery. (.-ref twig-ref) (atom {}))))
+(defn query [twig-ref
+             {:keys [order-by-child order-by-value order-by-key order-by-priority
+                     start-at end-at equal-to limit-to-first limit-to-last]}]
+  #?(:cljs
+  (let [q (cond-> (.-ref twig-ref)
+            order-by-child (.orderByChild order-by-child)
+            order-by-value .orderByValue
+            order-by-key .orderByKey
+            order-by-priority .orderByPriority
+            start-at (.startAt start-at)
+            end-at (.endAt end-at)
+            equal-to (.equalTo equal-to)
+            limit-to-first (.limitToFirst limit-to-first)
+            limit-to-last (.limitToLast limit-to-last))]
+    (TwigQuery. q (atom {})))))
 

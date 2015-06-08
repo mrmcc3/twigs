@@ -16,12 +16,12 @@
 
 (def ch (ca/chan))
 
-(def q (tw/query r))
+(def q (tw/query r {:order-by-value true :limit-to-first 2}))
 
 (ca/sub q :value ch)
 
 (go-loop []
   (let [[k ss] (ca/<! ch)]
-    (println k)
+    (println (map first ss))
     (recur)))
 
