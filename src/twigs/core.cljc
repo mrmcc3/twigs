@@ -3,9 +3,7 @@
             [twigs.snapshot]
             [twigs.query]))
 
-(def url->ref twigs.reference/wrap-reference)
-
-(def wrap-ss twigs.snapshot/wrap-snapshot)
+(def url->ref twigs.reference/url->ref)
 
 (def query twigs.query/query)
 

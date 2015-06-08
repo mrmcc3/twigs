@@ -39,7 +39,7 @@
        (let [snaps #?(:cljs (array) :clj (.getChildren ss))]
          #?(:cljs (.forEach ss (fn [css] (.push snaps css) false)))
          (map (fn [css]
-                (let [k (#?(:cljs .key :clj .getKey) css)]
+                (let [k (-> css #?(:cljs .key :clj .getKey) keyword)]
                   #?(:cljs [k (-lookup this k)]
                      :clj (MapEntry. k (.valAt this k)))))
               snaps))))
@@ -47,21 +47,26 @@
   ILookup
   (#?(:cljs -lookup :clj valAt) [this k]
     (#?(:cljs -lookup :clj .valAt) this k
-      (TwigSnapshot. (.child ss (name k)) (delay nil))))
+      (TwigSnapshot. (.child ss (name k))
+                     (doto (delay nil) deref))))
   (#?(:cljs -lookup :clj valAt) [_ k nf]
     (if (.hasChild ss (name k))
       (let [css (.child ss (name k))]
         (TwigSnapshot. css
           (if (realized? d)
-            (doto (delay (get @d (keyword k)) deref))
-            (delay (-> css #?(:cljs .exportVal :clj (.getValue true))
-                       #?(:cljs (js->clj :keywordize-keys true)))))))
+            (doto (delay (get @d (keyword k))) deref)
+            (delay (-> #?(:cljs (.exportVal css)
+                          :clj (into {} (.getValue css true)))
+                       #?(:cljs (js->clj :keywordize-keys true)
+                          :clj clojure.walk/keywordize-keys))))))
       nf)))
 
 (defn wrap-snapshot [raw-ss]
   (let [k (-> raw-ss #?(:cljs .key :clj .getKey) keyword)
         ss (TwigSnapshot. raw-ss
-             (delay (-> raw-ss #?(:cljs .exportVal :clj (.getValue true))
-                        #?(:cljs (js->clj :keywordize-keys true)))))]
+             (delay (-> #?(:cljs (.exportVal raw-ss)
+                           :clj (into {} (.getValue raw-ss true)))
+                        #?(:cljs (js->clj :keywordize-keys true)
+                           :clj clojure.walk/keywordize-keys))))]
     #?(:cljs [k ss] :clj (MapEntry. k ss))))
 
