@@ -1,5 +1,7 @@
 (ns twigs.dev
-  (:require [twigs.core :as tw]))
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require [twigs.core :as tw]
+            [cljs.core.async :as ca]))
 
 (enable-console-print!)
 
@@ -12,21 +14,14 @@
 
 (println (= (empty r) (-> r pop pop)))
 
-;;(-> r .-ref
-;;    (.set #js {:c "hello " :d "world!"}))
+(def ch (ca/chan))
 
-(defn handler [ss]
+(def q (tw/query r))
 
-  ;; we can now destructure snapshots
-  (let [[k {:keys [c] :as v}] (tw/wrap-ss ss)]
+(ca/sub q :value ch)
 
-    (println k) ;; "b"
-    (println @c) ;; "hello". remember to deref values
-    (println (realized? c)) ;; true
-    (println (count v)) ;; 2
+(go-loop []
+  (let [[k ss] (ca/<! ch)]
+    (println k)
+    (recur)))
 
-    ;; snapshots are now sequable
-    (-> v keys println)
-    (->> v vals (map deref) (reduce str) println)))
-
-(-> r .-ref (.on "value" handler))

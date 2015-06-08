@@ -17,7 +17,7 @@
 ;; we represent a firebase datasnapshot as a tuple [k v]
 ;; k is ss.key()
 ;; v is a TwigSnapshot which is a delayed clojure datastructure (derefable).
-;; v is also associative, seqable, countable and supports lookup
+;; v is also seqable, countable and supports lookup
 
 (deftype TwigSnapshot [ss d]
   Object

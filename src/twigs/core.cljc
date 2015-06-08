@@ -1,7 +1,11 @@
 (ns twigs.core
-  (:require [twigs.reference :as rf]
-            [twigs.snapshot :as ss]))
+  (:require [twigs.reference]
+            [twigs.snapshot]
+            [twigs.query]))
 
-(def url->ref rf/wrap-reference)
+(def url->ref twigs.reference/wrap-reference)
 
-(def wrap-ss ss/wrap-snapshot)
+(def wrap-ss twigs.snapshot/wrap-snapshot)
+
+(def query twigs.query/query)
+
