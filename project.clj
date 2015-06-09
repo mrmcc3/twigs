@@ -15,7 +15,10 @@
 
   :java-source-paths ["src/twigs/java"]
 
-  :aliases {"test" ["test" "twigs.core-test"]}
+  :aliases {"test" ["do"
+                    "clean,"
+                    "test" "twigs.core-test,"
+                    "cljsbuild" "once" "browser-test-min"]}
 
   :repositories [["clojars" {:url "http://clojars.org/repo/"
                              :username [:gpg :env/clojars_user]
