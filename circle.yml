@@ -11,7 +11,7 @@ dependencies:
     - chmod a+x boot
     - mv boot /home/ubuntu/bin
   override:
-    - boot checkout
+    - boot build-jar
   cache_directories:
     - "~/.m2"
 
