@@ -1,13 +1,15 @@
+out
+/out
 /target
 /classes
 /checkouts
 pom.xml
 pom.xml.asc
+*.map
+*.js
 *.jar
 *.class
 /.lein-*
 /.nrepl-port
-/dev/public/out
-/dev/public/main.js
 .idea
 twigs.iml
