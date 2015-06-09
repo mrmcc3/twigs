@@ -1,4 +1,4 @@
-(defproject twigs "0.1.7-SNAPSHOT"
+(defproject mrmcc3/twigs "0.1.7-SNAPSHOT"
   :description "A simple way to use firebase in Clojure[Script]"
   :url "https://github.com/mrmcc3/twigs"
   :license {:name "MIT"}
@@ -15,7 +15,10 @@
 
   :java-source-paths ["src/twigs/java"]
 
-  :aliases {"test" ["test" "twigs.core-test"]}
+  :aliases {"test" ["do"
+                    "clean,"
+                    "test" "twigs.core-test,"
+                    "cljsbuild" "once" "browser-test-min"]}
 
   :repositories [["clojars" {:url "http://clojars.org/repo/"
                              :username [:gpg :env/clojars_user]
