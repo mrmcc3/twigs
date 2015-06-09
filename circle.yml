@@ -2,9 +2,8 @@ machine:
 
   environment:
     BOOT_CLOJURE_VERSION: 1.6.0
-    BOOT_VERSION: 2.0.0
-    BOOT_LOCAL_REPO: /home/ubuntu/.m2
-    JAVA_OPTS: -Xms256m -Xmx512m
+    BOOT_VERSION: 2.0.0-rc14
+    JAVA_OPTS: -XXMaxPermSize=256m
 
 dependencies:
   pre:
@@ -13,6 +12,8 @@ dependencies:
     - mv boot /home/ubuntu/bin
   override:
     - boot checkout
+  cache_directories:
+    - "~/.m2"
 
 test:
   override:
