@@ -5,6 +5,8 @@
             [twigs.core :as tw]
             [om.core :as om]))
 
+;; WIP hackernews clone!!!
+
 (enable-console-print!)
 
 (def hn-url "https://hacker-news.firebaseio.com/v0")
