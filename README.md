@@ -11,10 +11,6 @@ This library is alpha quality.
 ### Tests (WIP)
 
 ```bash
-# Clojure
-lein test
-
-# ClojureScript in browser
-lein cljsbuild once browser-test
-open browser-test.html
+boot test-all
+open target/browser-test.html
 ```
