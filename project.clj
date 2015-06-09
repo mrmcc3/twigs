@@ -20,9 +20,9 @@
                     "test" "twigs.core-test,"
                     "cljsbuild" "once" "browser-test-min"]}
 
-  :repositories [["releases" {:url "http://clojars.org/repo/"
-                              :username [:gpg :env/clojars_user]
-                              :passphrase [:gpg :env/clojars_pass]}]]
+  :repositories [["clojars" {:url "http://clojars.org/repo/"
+                             :username "mrmcc3" :password :env}]]
+  :deploy-repositories [["releases" :clojars]]
 
   :cljsbuild {
     :builds [{:id "browser-test-min"
