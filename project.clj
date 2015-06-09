@@ -25,12 +25,12 @@
   :cljsbuild {
     :builds [{:id "browser-test-min"
               :source-paths ["src" "test"]
-              :compiler {:main twigs.browser-test-runner
+              :compiler {:main twigs.test-runner
                          :output-to "target/main.js"
                          :optimizations :advanced}}
              {:id "browser-test"
               :source-paths ["src" "test"]
-              :compiler {:main twigs.browser-test-runner
+              :compiler {:main twigs.test-runner
                          :output-to "target/main.js"
                          :output-dir "target/out"
                          :optimizations :none
