@@ -3,7 +3,7 @@ machine:
   environment:
     BOOT_CLOJURE_VERSION: 1.6.0
     BOOT_VERSION: 2.0.0
-    JAVA_OPTS: -XXMaxPermSize=256m
+    JAVA_OPTS: -Xms256m -Xmx512m
 
 dependencies:
   pre:
@@ -11,9 +11,7 @@ dependencies:
     - chmod a+x boot
     - mv boot /home/ubuntu/bin
   override:
-    - boot build-jar
-  cache_directories:
-    - "~/.m2"
+    - boot checkout
 
 test:
   override:
