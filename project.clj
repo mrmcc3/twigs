@@ -5,10 +5,10 @@
 
   :jvm-opts ^:replace ["-Xms512m" "-Xmx512m" "-server"]
 
-  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
-                 [org.clojure/clojurescript "0.0-3308"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [com.firebase/firebase-client-jvm "2.3.0"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-3308" :scope "provided"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha" :scope "provided"]
+                 [com.firebase/firebase-client-jvm "2.3.0" :scope "provided"]
                  [cljsjs/firebase "2.2.3-0"]]
 
   :plugins [[lein-cljsbuild "1.0.6"]]
