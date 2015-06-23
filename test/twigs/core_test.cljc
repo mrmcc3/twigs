@@ -5,6 +5,16 @@
                        [cljs.core.async :refer [sub unsub unsub-all chan take!]]])
             [twigs.core :as tw]))
 
+;; assumes the following data in firebase
+;; {
+;;   "a": {
+;;     "b": {
+;;       "c": "hello"
+;;       "d": "world"
+;;     }
+;;   }
+;; }
+
 (deftest twig-refs
   (let [url "https://twigs.firebaseio.com/a"
         r (tw/url->ref url)]
