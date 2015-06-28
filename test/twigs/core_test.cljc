@@ -17,20 +17,20 @@
 
 (deftest twig-refs
   (let [url "https://twigs.firebaseio.com/a"
-        r (tw/url->ref url)]
+        r (tw/reference url)]
     (is (= (str r) url))
     (is (= (peek r) :a))
     (is (= (pop r) (empty r)))
     (is (not= (pop r) r))
-    (is (= (conj r :b) (tw/url->ref (str url "/b"))))
+    (is (= (conj r :b) (tw/reference (str url "/b"))))
     (is (= r (-> r (conj :c) pop)))))
 
 (deftest twig-query-snaps
-  (let [r (tw/url->ref "https://twigs.firebaseio.com/a")
+  (let [r (tw/reference "https://twigs.firebaseio.com/a")
         q (tw/query r)
         ch (chan)
         do-test (fn [[k {:keys [b] :as a}]]
-                  (unsub-all q)
+                  (tw/unsub q)
                   (is (= k :a))
                   (is (= (count a) 1))
                   (is (= (count b) 2))
@@ -50,7 +50,7 @@
                     (is (realized? (:nothing ss)))
                     (is (= (count (:nothing ss)) 0))
                     (is (nil? (deref (:nothing ss))))))]
-    (sub q :value ch)
+    (tw/sub q "value" ch)
     #?(:cljs (async done (take! ch (fn [ss] (do-test ss) (done))))
        :clj (do-test (<!! ch)))))
 

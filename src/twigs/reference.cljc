@@ -43,7 +43,7 @@
          (= (str ref) (str other))
          false))))
 
-(defn url->ref [url]
+(defn reference [url]
   #?(:cljs (TwigRef. (js/Firebase. url))
      :clj (TwigRef. (Firebase. url))))
 

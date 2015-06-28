@@ -1,73 +1,121 @@
 (ns twigs.query
-  #?(:cljs (:require [twigs.snapshot :refer [wrap-snapshot]]
-                     [cljs.core.async :as ca]
-                     [cljsjs.firebase])
-     :clj (:require [twigs.snapshot :refer [wrap-snapshot]]
-                    [clojure.core.async :as ca]))
-  #?(:clj (:import [com.firebase.client Firebase
-                                        ValueEventListener
-                                        ChildEventListener])))
+  #? (:cljs
+      (:require [cljs.core.async :refer [put!]]
+                [cljs.core.async.impl.protocols :refer [WritePort]]
+                [cljsjs.firebase])
+      :clj
+      (:require [clojure.core.async :refer [put!]]
+                [clojure.core.async.impl.protocols :refer [WritePort]]))
+  #? (:clj
+      (:import [clojure.lang IAtom]
+               [com.firebase.client Firebase ValueEventListener ChildEventListener])))
+
+;; returns a callback function when given a valid subscriber
+(defn sub->cb [sub]
+  (cond
+    (satisfies? WritePort sub) #(put! sub %)
+    (ifn? sub) sub
+    :else (throw
+           #? (:cljs (js/Error. "Subscribers must be channels or callbacks")
+               :clj (Exception. "Subscribers must be channels or callbacks")))))
+
+;; Provides an "on" function for Firebase's verbose Java API that's like the JS API. 
+(defn on
+  ([rq topic sub] (on rq topic sub nil))
+  ([rq topic sub err-sub]
+   (let [cb (sub->cb sub)
+         err-cb (if err-sub (sub->cb err-sub))]
+     #? (:cljs
+         (if err-cb
+           (.on rq topic cb err-cb)
+           (.on rq topic cb))
+         :cljs
+         (case topic
+           "value"
+           (.addValueEventListener rq
+             (reify ValueEventListener
+               (onDataChange [_ ss] (cb ss))
+               (onCancelled [_ err] (if err-cb (err-cb err)))))
+           (.addChildEventListener rq
+             (reify ChildEventListener
+               (onChildAdded [_ ss pc] (case topic "child_added" (cb ss pc) nil))
+               (onChildChanged [_ ss pc] (case topic "child_changed" (cb ss pc) nil))
+               (onChildMoved [_ ss pc] (case topic "child_moved" (cb ss pc) nil))
+               (onChildRemoved [_ ss] (case topic "child_removed" (cb ss) nil))
+               (onCancelled [_ err (if err-cb (err-cb err))]))))))))
+
+;; Provides a uniform "off" function
+(defn off [rq topic cb]
+  #? (:cljs (.off rq topic cb) :clj (.removeEventListener rq cb)))
+
+;; Protocol for event publishers. allows subscriptions to be turned on/off"
+(defprotocol IPub
+  (sub [_ topic sub] [_ topic sub err-sub])
+  (unsub [_] [_ topic] [_ topic sub]))
+
+ ;; convenience function to construct a firebase query when given a reference
+ ;;  and a map of options (order-by-..., start-at, end-at, equal-to, limit-to-...)
+(defn raw-query
+  [raw-ref {:keys [order-by-child order-by-value order-by-key order-by-priority
+                   start-at end-at equal-to limit-to-first limit-to-last]}]
+   (cond-> raw-ref
+     order-by-child (.orderByChild order-by-child)
+     order-by-value .orderByValue
+     order-by-key .orderByKey
+     order-by-priority .orderByPriority
+     start-at (.startAt start-at)
+     end-at (.endAt end-at)
+     equal-to (.equalTo equal-to)
+     limit-to-first (.limitToFirst limit-to-first)
+     limit-to-last (.limitToLast limit-to-last)))
 
 ;; A TwigQuery is a publisher of events at a given firebase reference
-;; with a set of query options.
+;; with a set of query options. each query keeps track of its own
+;; subscribers (queries are stateful)
+(deftype TwigQuery [^:mutable ^:unsynchronized-mutable q subs]
+  IPub
 
-;; you can subscribe to events using the standard core.async sub function
-;; with a topic of :value :child_added :child_removed :child_changed or :child_moved
+  ;; you can subscribe to events using sub with a topic of ("value"
+  ;; "child_added" "child_removed" "child_changed" or "child_moved")
+  ;; and either a channel or a callback. The channel or callback will
+  ;; be supplied with a RAW firebase snapshot. You can also supply
+  ;; an optional error channel or callback for cancelations
+  (sub [this topic sub] (sub this topic sub nil))
+  (sub [_ topic sub err-sub]
+    (if-not (get-in @subs [topic sub])
+      (swap! subs assoc-in [topic sub]
+             (on q topic sub err-sub)))
+    nil)
 
-;; Each query keeps track of its own registered subscribers (queries are stateful)
-;; there is no global registry of subscribers.
+  ;; you can unsubscribe everything, a topic or a topic+sub with unsub
+  (unsub [_ topic sub]
+    (when-let [cb (get-in @subs [topic sub])]
+      (off q topic cb)
+      (swap! subs update-in [topic] dissoc sub))
+      nil)
+  (unsub [this topic]
+    (doseq [[sub _] (get @subs topic)]
+      (unsub this topic sub)))
+  (unsub [this]
+    (doseq [[topic m] @subs
+            [sub _] m]
+      (unsub this topic sub)))
 
-;; WIP still need to handle errors from callbacks
-
- (deftype TwigQuery [q subs]
-   ca/Pub
-   (sub* [_ topic ch _] ;; could be ch-or-fn for callback style ??
-     (let [cb #(ca/put! ch (wrap-snapshot %))
-           t (name topic)]
-       (if-not (get-in @subs [t ch])
-         (swap! subs assoc-in [t ch]
-           #?(:cljs (.on q t cb)
-              :clj (case t "value"
-                     (.addValueEventListener q
-                       (reify ValueEventListener
-                         (onDataChange [_ ss] (cb ss))
-                         (onCancelled [_ _])))
-                     (.addChildEventListener q
-                       (reify ChildEventListener
-                         (onChildAdded [_ ss _]
-                           (case t "child_added" (cb ss) nil))
-                         (onChildChanged [_ ss _]
-                           (case t "child_changed" (cb ss) nil))
-                         (onChildMoved [_ ss _]
-                           (case t "child_moved" (cb ss) nil))
-                         (onChildRemoved [_ ss]
-                           (case t "child_removed" (cb ss) nil))
-                         (onCancelled [_ _]))))))) nil))
-   (unsub* [_ topic ch]
-     (let [t (name topic)]
-       (when-let [cb (get-in @subs [t ch])]
-         #?(:cljs (.off q t cb) :clj (.removeEventListener q cb))
-         (swap! subs update-in [t] dissoc ch)) nil))
-   (unsub-all* [this]
-     (doseq [[topic _] @subs]
-       (ca/unsub-all* this topic)))
-   (unsub-all* [this topic]
-     (doseq [[ch _] (get @subs topic)]
-       (ca/unsub* this topic ch))))
+  ;; you can use reset! to change the queries options (orderBy, limitTo, etc..)
+  #? (:clj IAtom :cljs IReset)
+  (#? (:clj reset :cljs -reset!) [this opts]
+      (let [raw-ref (#? (:cljs .ref :clj .getRef) q)
+            nq (raw-query raw-ref opts)]
+        (doseq [[topic m] @subs
+                [_ cb] m]
+          (off q topic cb)
+          (on nq topic cb))
+        (set! q nq)
+        nil)))
 
 (defn query
+  "construct a TwigQuery from a TwigRef and query options"
   ([twig-ref] (query twig-ref {}))
-  ([twig-ref {:keys [order-by-child order-by-value order-by-key order-by-priority
-                     start-at end-at equal-to limit-to-first limit-to-last]}]
-    (let [q (cond-> (.-ref twig-ref)
-              order-by-child (.orderByChild order-by-child)
-              order-by-value .orderByValue
-              order-by-key .orderByKey
-              order-by-priority .orderByPriority
-              start-at (.startAt start-at)
-              end-at (.endAt end-at)
-              equal-to (.equalTo equal-to)
-              limit-to-first (.limitToFirst limit-to-first)
-              limit-to-last (.limitToLast limit-to-last))]
-      (TwigQuery. q (atom {})))))
+  ([twig-ref opts]
+   (TwigQuery. (raw-query (.-ref twig-ref) opts) (atom {}))))
 

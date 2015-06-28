@@ -61,7 +61,7 @@
                           :clj clojure.walk/keywordize-keys))))))
       nf)))
 
-(defn wrap-snapshot [raw-ss]
+(defn snapshot [raw-ss]
   (let [k (-> raw-ss #?(:cljs .key :clj .getKey) keyword)
         ss (TwigSnapshot. raw-ss
              (delay (-> #?(:cljs (.exportVal raw-ss)
