@@ -1,4 +1,5 @@
 (ns twigs.snapshot
+  (:require [twigs.protocols :refer [IRef -raw-ref]])
   #?(:clj (:import [com.firebase.client DataSnapshot]
                    [clojure.lang IPending IDeref ILookup MapEntry
                                  Associative Seqable Counted])))
@@ -22,6 +23,9 @@
 (deftype TwigSnapshot [ss d]
   Object
   (toString [_] "TwigSnapshot")
+
+  IRef
+  (-raw-ref [_] (-raw-ref ss))
 
   IPending
   (#?(:cljs -realized? :clj isRealized) [_] (realized? d))
@@ -70,3 +74,6 @@
                            :clj clojure.walk/keywordize-keys))))]
     #?(:cljs [k ss] :clj (MapEntry. k ss))))
 
+; (extend-protocol IRef
+;   #? (:cljs js/FirebaseDataSnapshot :clj DataSnapshot)
+;   (-raw-ref [ss] (#?(:cljs .ref :clj .getRef) ss)))

@@ -1,37 +1,31 @@
 (ns twigs.core
-  (:require [twigs.reference]
-            [twigs.snapshot]
-            [twigs.query]))
+  (:refer-clojure :exclude [ref])
+  (:require [twigs.protocols :refer [-once -on! -off! -raw-ref]]
+            [twigs.reference :refer [twig-ref]]
+            [twigs.query :refer [twig-query raw-query*]]
+            #?@(:cljs [[cljsjs.firebase]])))
 
-;; get a TwigRef from url
-(def reference twigs.reference/reference)
+;; refs
 
-;; get a TwigSnapshot from raw snapshot
-(def snapshot twigs.snapshot/snapshot)
+(def raw-ref -raw-ref)
 
-;; get a raw query from a raw ref (convenience)
-(def raw-query twigs.query/raw-query)
+(defn ref [o]
+  (twig-ref (raw-ref o)))
 
-;; subscribe a callback/channel to raw query or ref using
-;; the global firebase registry. on returns callback for off
-(def on twigs.query/on)
-(def off twigs.query/off) ;; must provide callback (from on)
+;; queries
 
-;; get a TwigQuery from a TwigRef
-;; reset! gives the ability to change query options on the fly
-(def query twigs.query/query)
+(def raw-query raw-query*)
 
-;; similar to on/off except each query tracks subscribers
-;; can unsub (locally) by topic or everything.
-(def sub twigs.query/sub)
-(def unsub twigs.query/unsub)
+(defn query
+  ([o] (query o {}))
+  ([o opts] (twig-query (atom (raw-query o opts)) (atom {}))))
 
-(def tr (reference "https://drft.firebaseio.com"))
+(defn once
+  ([q sub] (once q sub nil))
+  ([q sub err] (-once q sub err)))
 
-(defn cb [ss]
-  (println "here"))
+(defn on!
+  ([q topic sub] (on! q topic sub nil))
+  ([q topic sub err] (-on! q topic sub err)))
 
-(on tr "value" cb)
-
-
-
+(def off! -off!)
