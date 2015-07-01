@@ -16,8 +16,8 @@
   :java-source-paths ["src/twigs/java"]
 
 
-  :aliases {"test" ["do" "clean," "test" "twigs.core-test,"
-                    "cljsbuild" "once" "browser-test-min"]}
+  :aliases {"test-all" ["do" "clean," "test" "twigs.core-test,"
+                        "cljsbuild" "once" "browser-test-min"]}
 
   :deploy-repositories [["releases" :clojars]]
 
@@ -49,4 +49,3 @@
                     :output-dir "examples/hackernews/out"
                     :optimizations :none
                     :source-map true}}]}}})
-

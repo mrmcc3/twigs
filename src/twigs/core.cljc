@@ -3,6 +3,7 @@
   (:require [twigs.protocols :refer [-once -on! -off! -raw-ref]]
             [twigs.reference :refer [twig-ref]]
             [twigs.query :refer [twig-query raw-query*]]
+            [twigs.snapshot :refer [snapshot*]]
             #?@(:cljs [[cljsjs.firebase]])))
 
 ;; refs
@@ -29,3 +30,7 @@
   ([q topic sub err] (-on! q topic sub err)))
 
 (def off! -off!)
+
+;; snapshots
+
+(def snapshot snapshot*)
