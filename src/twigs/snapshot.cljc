@@ -1,32 +1,22 @@
 (ns twigs.snapshot
-  (:require [twigs.protocols :refer [IRef -raw-ref]]
-            [twigs.utils :refer [ss->clj]])
+  (:require [twigs.protocols :refer [IRef ->raw-ref]]
+            [twigs.utils :refer [->clj]])
   #?(:clj (:import [com.firebase.client DataSnapshot]
                    [clojure.lang IPending IDeref ILookup MapEntry
                                  Associative Seqable Counted])))
 
-;; wrapper type around firebase datasnapshot.
+(defn ss->clj* [raw-ss]
+  (->clj #?(:cljs (.exportVal raw-ss)
+            :clj (.getValue raw-ss true))))
 
-;; This is perhaps the main motivation for this library. It's tempting to just handle
-;; all firebase snapshots with (-> ss .val js->clj) to get clojure
-;; datastructures and all their goodness.
-
-;; However I think it's reasonable to assume that firebase doesn't directly give
-;; you raw data because .val can be expensive and wasteful (walking down a
-;; firebase datasnapshot before calling .val removes a lot of uneeded work).
-;; Otherwise why not just return the data?
-
-;; we represent a firebase datasnapshot as a tuple [k v]
-;; k is ss.key()
-;; v is a TwigSnapshot which is a delayed clojure datastructure (derefable).
-;; v is also seqable, countable and supports lookup
+;; wrapper type around firebase snapshots
 
 (deftype TwigSnapshot [ss d]
   Object
   (toString [_] "TwigSnapshot")
 
   IRef
-  (-raw-ref [_] (-raw-ref ss))
+  (->raw-ref [_] (->raw-ref ss))
 
   IPending
   (#?(:cljs -realized? :clj isRealized) [_] (realized? d))
@@ -60,14 +50,14 @@
         (TwigSnapshot. css
           (if (realized? d)
             (doto (delay (get @d (keyword k))) deref)
-            (delay (ss->clj css)))))
+            (delay (ss->clj* css)))))
       nf)))
 
-(defn snapshot* [raw-ss]
+(defn ->snapshot [raw-ss]
   (let [k (-> raw-ss #?(:cljs .key :clj .getKey) keyword)
-        ss (TwigSnapshot. raw-ss (delay (ss->clj raw-ss)))]
+        ss (TwigSnapshot. raw-ss (delay (ss->clj* raw-ss)))]
     #?(:cljs [k ss] :clj (MapEntry. k ss))))
 
 ; (extend-protocol IRef
 ;   #? (:cljs js/FirebaseDataSnapshot :clj DataSnapshot)
-;   (-raw-ref [ss] (#?(:cljs .ref :clj .getRef) ss)))
+;   (->raw-ref [ss] (#?(:cljs .ref :clj .getRef) ss)))

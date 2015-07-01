@@ -5,12 +5,13 @@
                     [com.firebase.client Firebase Query])))
 
 ;; thin wrapper type around firebase references
+
 (deftype TwigRef [ref]
   Object
   (toString [_] (.toString ref))
 
   IRef
-  (-raw-ref [_] ref)
+  (->raw-ref [_] ref)
 
   #?@(:cljs
       [IStack
@@ -41,13 +42,13 @@
            (= (str ref) (str other))
            false))]))
 
-(defn twig-ref [r]
+(defn ->ref [r]
   (TwigRef. r))
 
 (extend-protocol IRef
   #?(:cljs string :clj String)
-  (-raw-ref [s] #?(:cljs (js/Firebase. s) :clj (Firebase. s)))
+  (->raw-ref [s] #?(:cljs (js/Firebase. s) :clj (Firebase. s)))
   #?(:cljs js/Firebase :clj Firebase)
-  (-raw-ref [r] r)
+  (->raw-ref [r] r)
   #?(:cljs object :clj Query)
-  (-raw-ref [q] #?(:cljs (.ref q) :clj (.getRef q))))
+  (->raw-ref [q] #?(:cljs (.ref q) :clj (.getRef q))))

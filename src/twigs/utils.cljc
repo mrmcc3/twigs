@@ -25,7 +25,3 @@
 (defn ->clj [o]
   #?(:cljs (js->clj o :keywordize-keys true)
      :clj (-clj o)))
-
-(defn ss->clj [raw-ss]
-  (->clj #?(:cljs (.exportVal raw-ss)
-            :clj (.getValue raw-ss true))))

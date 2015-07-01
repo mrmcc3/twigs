@@ -6,4 +6,4 @@
   (-off! [_] [_ topic] [_ topic sub]))
 
 (defprotocol IRef
-  (-raw-ref [_]))
+  (->raw-ref [_]))

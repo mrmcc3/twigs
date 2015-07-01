@@ -1,25 +1,25 @@
 (ns twigs.core
   (:refer-clojure :exclude [ref])
-  (:require [twigs.protocols :refer [-once -on! -off! -raw-ref]]
-            [twigs.reference :refer [twig-ref]]
-            [twigs.query :refer [twig-query raw-query*]]
-            [twigs.snapshot :refer [snapshot*]]
+  (:require [twigs.protocols :refer [-once -on! -off! ->raw-ref]]
+            [twigs.reference :refer [->ref]]
+            [twigs.query :refer [->query ->raw-query]]
+            [twigs.snapshot :refer [->snapshot ss->clj*]]
             #?@(:cljs [[cljsjs.firebase]])))
 
 ;; refs
 
-(def raw-ref -raw-ref)
+(def raw-ref ->raw-ref)
 
 (defn ref [o]
-  (twig-ref (raw-ref o)))
+  (->ref (raw-ref o)))
 
 ;; queries
 
-(def raw-query raw-query*)
+(def raw-query ->raw-query)
 
 (defn query
   ([o] (query o {}))
-  ([o opts] (twig-query (atom (raw-query o opts)) (atom {}))))
+  ([o opts] (->query (atom (raw-query o opts)) (atom {}))))
 
 (defn once
   ([q sub] (once q sub nil))
@@ -33,4 +33,6 @@
 
 ;; snapshots
 
-(def snapshot snapshot*)
+(def snapshot ->snapshot)
+
+(def ss->clj ss->clj*)
