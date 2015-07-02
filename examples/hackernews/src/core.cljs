@@ -1,107 +1,84 @@
 (ns examples.hackernews.core
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [chan sub unsub unsub-all <!]]
-            [sablono.core :as html :refer-macros [html]]
-            [twigs.core :as tw]
-            [om.core :as om]))
+  (:require [sablono.core :as html :refer-macros [html]]
+            [om.core :as om]
+            [twigs.core :as tw]))
 
 ;; WIP hackernews clone!!!
 
 (enable-console-print!)
 
-(def hn-url "https://hacker-news.firebaseio.com/v0")
+(def app-state
+  (atom {:page 0}))
 
-(defn story [[_ ss] owner]
-  (reify
-    om/IWillMount
-    (will-mount [_]
-      (let [q (-> hn-url tw/url->ref (conj :item (str @ss)) tw/query)
-            ch (chan)]
-        (om/set-state! owner :q q)
-        (sub q :value ch)
-        (go-loop []
-          (let [[_ ss] (<! ch)]
-            (om/set-state! owner :story ss)
-            (recur)))))
-    om/IWillUnmount
-    (will-unmount [_]
-      (let [q (om/get-state owner :q)]
-        (unsub-all q)))
-    om/IRenderState
-    (render-state [_ {{:keys [title url score] :as story} :story}]
-      (if story
-        (html [:p.h4 @title])))))
+(def hn-ref (tw/ref "https://hacker-news.firebaseio.com/v0"))
 
-(def separator
-  [:span.gray.h2
-   {:style {:position "relative"
-            :vertical-align "middle"}} "/"])
+(def per-page 10)
 
-(defn page->top-stories-q [p n]
-  (-> hn-url tw/url->ref (conj :topstories)
-      (tw/query {:order-by-key true
-                 :start-at (str (* p n))
-                 :limit-to-first n})))
+(def top-stories-q
+  (tw/query (conj hn-ref :topstories)
+            {:order-by-key true
+             :start-at "0"
+             :limit-to-first per-page}))
 
-(defn app [data owner]
+(tw/on! top-stories-q "value"
+  (fn [[_ ss]] (swap! app-state assoc :stories ss)))
+
+;; state should probably go in global app-state
+(defn story [[k item] owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:page 0
-       :q (page->top-stories-q 0 30)
-       :ch (chan)})
+      {:q (tw/query (conj hn-ref :item (str @item)))})
     om/IWillMount
     (will-mount [_]
-      (let [q (om/get-state owner :q)
-            ch (om/get-state owner :ch)]
-        (go-loop []
-          (let [[_ ss] (<! ch)]
-            (om/set-state! owner :stories ss)
-            (recur)))
-        (sub q :value ch)))
+      (tw/on! (om/get-state owner :q) "value"
+        (fn [[_ ss]] (om/set-state! owner :ss ss))))
     om/IWillUnmount
     (will-unmount [_]
-      (let [q (om/get-state owner :q)]
-        (unsub-all q)))
-    om/IDidUpdate
-    (did-update [_ _ {prev-page :page prev-q :q ch :ch}]
-      (let [page (om/get-state owner :page)]
-        (when-not (= page prev-page)
-          (unsub-all prev-q)
-          (let [q (page->top-stories-q page 30)]
-            (om/set-state! owner :q q)
-            (sub q :value ch)))))
+      (tw/off! (om/get-state owner :q)))
     om/IRenderState
-    (render-state [_ {:keys [page stories]}]
-      (html
-        [:.app-wrapper.container
-         [:p.caps.center.m2 "HACKERNEWS EXAMPLE"]
-         [:.p2.bg-darken-1.border.rounded
-          [:.mxn1
-           [:a.button.button-narrow.button-transparent {:href "#!"} "HN"]
-           ;separator [:a.button.button-narrow.button-transparent {:href "#!"} "Hot Dogs"]
-           ]]
-         [:.p2 (om/build-all story stories {:key-fn first})]
-         [:.p2.bg-darken-1.border.rounded
-          [:.clearfix
-           [:a.left.button.button-narrow.button-transparent
-            {:href "#!"
-             :onClick (fn [e]
-                        (om/update-state! owner :page
-                          (fn [p] (if (zero? p) 0 (dec p)))))}
-            "Previous"]
-           [:a.right.button.button-narrow.button-transparent
-            {:href "#!"
-             :onClick (fn [e]
-                        (om/update-state! owner :page
-                          (fn [p] (inc p))))}
-             "Next"]
-           [:.overflow-hidden.sm-show.center
-            [:a.regular.button.button-narrow.button-transparent {:href "#!"} (str "Page " (inc page))]]
-           ]]]))))
+    (render-state [_ {{:keys [score title by]} :ss}]
+      (if title
+        (html [:.m1.p1.border.rounded
+               [:span.h5.px1.orange @score]
+               [:span.h5.px1 @title]
+               [:span.h6.px1.italic.gray (str "(" @by ")")]])))))
 
-(def app-state
-  (atom {}))
+(defn handle-page [data f]
+  (fn [e]
+    (-> e .-target .blur)
+    (om/transact! data :page
+      #(let [np (f %)] (if (> np 0) np 0)))))
+
+(defn app [{:keys [page stories] :as data} owner]
+  (reify
+    om/IWillReceiveProps
+    (will-receive-props [_ {np :page}]
+      (let [p (om/get-props owner :page)]
+        (when (not= p np)
+          (reset! top-stories-q
+                  {:order-by-key true
+                   :start-at (str (* np per-page))
+                   :limit-to-first per-page}))))
+    om/IRender
+    (render [_]
+      (html
+        [:.p2.container
+         [:p.caps.center.m2 "Hackernews Example"]
+         [:.p1.border-top.border-black
+          (om/build-all story stories {:key-fn first})]
+         [:.bg-orange.rounded
+          [:.clearfix
+           [:button.left.button-narrow.button-transparent
+            {:onClick (handle-page data dec)}
+            "Previous"]
+           [:button.right.button-narrow.button-transparent
+            {:onClick (handle-page data inc)}
+            "Next"]
+           [:.overflow-hidden.sm-show.center
+            [:a.regular.button.button-narrow.button-transparent
+             {:href "#!"}
+             (str "Page " (inc page))]]]]]))))
 
 (om/root app app-state
   {:target (.getElementById js/document "app")})

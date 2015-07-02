@@ -131,12 +131,11 @@
   ;; use reset! to change the queries options (orderBy, limitTo, etc..)
   #? (:clj IAtom :cljs IReset)
   (#? (:clj reset :cljs -reset!) [_ opts]
-      (let [rr (#? (:cljs .ref :clj .getRef) @q)
-            nq (->raw-query rr opts)]
+      (let [nq (->raw-query @q opts)]
         (doseq [[topic m] @subs
                 [_ [cb err]] m]
           (off* @q topic cb)
-          (on* nq topic cb err ->snapshot))
+          (on* nq topic cb err nil)) ;; cb is already wrapped
         (reset! q nq)
         nil)))
 
